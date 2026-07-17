@@ -9,11 +9,10 @@ from flask_mail import Mail, Message
 from gtts import gTTS
 
 app = Flask(__name__)
-# Render requires a static secret key or one passed via environment variables
-app.secret_key = os.getenv('SECRET_KEY', 'super-secret-ninja-key-198237')
 
-# Database Setup - Points to a persistent directory or local sqlite file
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///newsbot.db'
+# Environment-based configuration
+app.secret_key = os.getenv('SECRET_KEY', 'super-secret-ninja-key-198237')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///newsbot.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -26,7 +25,7 @@ app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
 mail = Mail(app)
 
-# Fallback API Key safely injected
+# News API Key
 NEWS_API_KEY = os.getenv("NEWS_API_KEY", "07bbe16acc404cc0b492b7b75f55e708")
 
 # --- Database Models ---
@@ -112,7 +111,7 @@ def register():
         if not is_first_user:
             try:
                 msg = Message("New User Registration - Newsbotninja",
-                              recipients=["odangalevi@gmail.com"])
+                              recipients=[os.getenv('ADMIN_EMAIL', 'odangalevi@gmail.com')])
                 msg.body = f"A new user has registered on the platform.\nUsername: {username}\nEmail: {email}"
                 mail.send(msg)
             except Exception as e:
@@ -185,4 +184,4 @@ def delete_user(user_id):
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True)
+    app.run(debug=False)
